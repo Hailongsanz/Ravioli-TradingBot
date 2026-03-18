@@ -148,6 +148,18 @@ async def set_symbol(request: Request):
     return JSONResponse({"status": "ok", "symbol": symbol, "restart_required": True})
 
 
+@app.post("/api/scan")
+async def trigger_scan():
+    """Manually trigger the screener scan."""
+    try:
+        if not engine.ib.isConnected():
+            return JSONResponse({"status": "error", "message": "Bot not connected"}, status_code=400)
+        engine.pending_scan = True
+        return JSONResponse({"status": "ok"})
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
 @app.post("/api/quit")
 async def quit_app():
     """Shut down the entire application."""
@@ -158,10 +170,17 @@ async def quit_app():
     return JSONResponse({"status": "shutting_down"})
 
 
+shutdown_timer = None
+
 @app.websocket("/ws")
 async def websocket_endpoint(ws: WebSocket):
+    global shutdown_timer
     await ws.accept()
     clients.add(ws)
+    # Cancel any pending shutdown since a client connected
+    if shutdown_timer is not None:
+        shutdown_timer.cancel()
+        shutdown_timer = None
     try:
         await ws.send_text(json.dumps({"type": "status", "data": engine.get_state()}, default=str))
     except Exception:
@@ -169,8 +188,23 @@ async def websocket_endpoint(ws: WebSocket):
     try:
         while True:
             await ws.receive_text()
-    except WebSocketDisconnect:
+    except (WebSocketDisconnect, Exception):
         clients.discard(ws)
+        logger.info("Client disconnected. %d client(s) remaining.", len(clients))
+        # If no clients remain, start a 30-second shutdown countdown
+        if not clients:
+            logger.info("No clients — shutting down in 30 seconds...")
+            shutdown_timer = threading.Timer(30.0, _shutdown)
+            shutdown_timer.start()
+
+
+def _shutdown():
+    """Shut down the app when all browser tabs are closed."""
+    if not clients:
+        logger.info("No clients connected for 30s — shutting down.")
+        if engine.is_running:
+            engine._running = False
+        os._exit(0)
 
 
 # ---------------------------------------------------------------------------

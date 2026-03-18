@@ -94,8 +94,20 @@
     padding: 3px 8px;
     background: var(--bg-tertiary);
     border-radius: 4px;
+    transition: all 0.3s;
   }
   .scan-info.active { color: var(--green); }
+  .scan-info.scanning {
+    color: var(--green);
+    background: rgba(63, 185, 80, 0.15);
+    animation: pulse-green 1s infinite;
+  }
+  @keyframes pulse-green {
+    0%, 100% { box-shadow: 0 0 4px rgba(63, 185, 80, 0.3); }
+    50% { box-shadow: 0 0 12px rgba(63, 185, 80, 0.6); }
+  }
+  .btn.scan { border-color: var(--purple); color: var(--purple); font-size: 11px; padding: 3px 10px; }
+  .btn.scan:hover { background: rgba(188, 140, 255, 0.15); }
 
   /* Main layout */
   .main {
@@ -584,6 +596,7 @@ function connectWS() {
       case 'status': handleStatus(event.data); break;
       case 'account': handleAccount(event.data); break;
       case 'scan': handleScan(event.data); break;
+      case 'bars_ready': loadBars(); break;
       case 'error': alert(event.data.message); break;
     }
   };
@@ -931,13 +944,21 @@ function handleScan(data) {
   switch (data.status) {
     case 'scanning':
       el.textContent = 'Scanning...';
-      el.className = 'scan-info';
+      el.className = 'scan-info scanning';
       break;
     case 'switched':
       el.textContent = `Picked ${data.to} (score: ${data.score})`;
       el.className = 'scan-info active';
       document.getElementById('symbolDisplay').textContent = data.to;
       document.title = data.to + ' — Ravioli Bot';
+      // Clear old ticker's trades and markers
+      allTrades = [];
+      tradeMarkers = [];
+      daySepMarkers = [];
+      document.getElementById('tradeBody').innerHTML = '';
+      updateAllTimeStats();
+      firstPrice = null;
+      barsLoaded = false;
       break;
     case 'same':
       el.textContent = `${data.symbol} confirmed (score: ${data.score})`;
@@ -947,6 +968,16 @@ function handleScan(data) {
       el.textContent = 'No ticker above threshold';
       el.className = 'scan-info';
       break;
+  }
+}
+
+async function triggerScan() {
+  try {
+    const res = await fetch('/api/scan', { method: 'POST' });
+    const data = await res.json();
+    if (data.status === 'error') alert(data.message);
+  } catch (err) {
+    alert('Scan failed: ' + err.message);
   }
 }
 

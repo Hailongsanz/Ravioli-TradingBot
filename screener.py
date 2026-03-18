@@ -16,18 +16,15 @@ import yfinance as yf
 # Watchlist — add/remove tickers as needed
 # ---------------------------------------------------------------------------
 WATCHLIST = [
-    # Proven winners — backtested profitable with V3 strategy
-    "TSLA",   # +$7,507  | Large-cap EV, strong trends
-    "LNAI",   # +$7,600  | Micro-cap, high volatility
-    "SOUN",   # +$6,541  | Mid-cap AI/growth
-    "META",   # +$1,985  | Large-cap tech, stable
-    "DASH",   # +$2,697  | Mid-cap delivery, low drawdown
-    "COIN",   # +$2,573  | Crypto exchange, highest win rate
-    "HOOD",   # +$2,493  | Fintech, smoothest equity curve
-    "RIVN",   # +$2,369  | EV, solid all-around
-    "MU",     # +$1,227  | Semiconductor, clean trends
-    "AVGO",   # +$687    | Semiconductor, low drawdown
-    "ROKU",   # +$646    | Streaming tech, moderate vol
+    # Proven winners — backtested profitable at 1.5% risk (30 days, 2026-03-18)
+    "SOUN",   # +$7,512  | Mid-cap AI/growth, high vol
+    "LNAI",   # +$7,453  | Micro-cap, high volatility
+    "TSLA",   # +$6,648  | Large-cap EV, best win rate (50%)
+    "RBLX",   # +$5,564  | Gaming, low drawdown (2.71%)
+    "SPOT",   # +$5,159  | Streaming, lowest drawdown (1.58%)
+    "ROKU",   # +$3,001  | Streaming tech, moderate vol
+    "META",   # +$1,875  | Large-cap tech, lowest drawdown (0.87%)
+    "AVGO",   # +$1,688  | Semiconductor, stable
 ]
 
 

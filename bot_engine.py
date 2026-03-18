@@ -186,6 +186,7 @@ class BotEngine:
         # Auto-scan tracking
         self.last_scan_date = None
         self.auto_scan_enabled = True
+        self.pending_scan = False
 
     def subscribe(self, callback: Callable):
         self._subscribers.append(callback)
@@ -342,6 +343,7 @@ class BotEngine:
         )
         self.bars.updateEvent += self.on_bar_update
         logger.info("Subscribed to %s 1-min bars.", self.symbol)
+        self._emit({"type": "bars_ready"})
 
     def bars_to_df(self) -> pd.DataFrame:
         df = util.df(self.bars)
@@ -938,6 +940,9 @@ class BotEngine:
                 logger.info("Detected existing SHORT position: %d shares", abs(existing))
             self.request_bars()
 
+            # Emit full state now that account, position, and bars are ready
+            self._emit({"type": "status", "data": self.get_state()})
+
             while self._running:
                 self.ib.sleep(1)
                 now_est = datetime.now(EST)
@@ -951,6 +956,11 @@ class BotEngine:
                         and now_time < MARKET_OPEN
                         and not self.in_position):
                     self.last_scan_date = today
+                    self.run_auto_scan()
+
+                # Manual scan triggered from UI
+                if self.pending_scan:
+                    self.pending_scan = False
                     self.run_auto_scan()
 
                 if now_time >= self.eod_close_time and self.in_position:
