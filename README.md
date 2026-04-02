@@ -26,7 +26,7 @@ python app.py
 
 Served at `http://localhost:8080`. Includes live candlestick chart with EMA/VWAP overlays, RSI/MACD/volume indicators, real-time trade log, and signal panel.
 
-> *(Add screenshot here)*
+<img width="1919" height="945" alt="image" src="https://github.com/user-attachments/assets/6a75840d-60cc-4a1c-a688-dd7867928c3e" />
 
 ---
 
